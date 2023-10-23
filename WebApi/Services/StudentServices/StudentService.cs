@@ -7,12 +7,15 @@ namespace WebApi
     {
         private readonly ApplicationDbContext _dbContext;
         private readonly ILogger<StudentService> _logger;
+        private readonly ICacheService _cacheService;
         public StudentService(
             ApplicationDbContext dbContext,
-            ILogger<StudentService> logger)
+            ILogger<StudentService> logger,
+            ICacheService cacheService)
         {
             _dbContext = dbContext;
             _logger = logger;
+            _cacheService = cacheService;
         }
         public async Task<Response<AddStudentDto>> AddStudentAsync(AddStudentDto model)
         {
@@ -29,6 +32,10 @@ namespace WebApi
             };
 
             await _dbContext.Students.AddAsync(newStudent);
+
+            var expirityTime = DateTimeOffset.Now.AddSeconds(30);
+            _cacheService.AddData($"student{newStudent.Id}", newStudent, expirityTime);
+
             var result = await _dbContext.SaveChangesAsync();
 
             return result > 0 
@@ -42,6 +49,7 @@ namespace WebApi
             if (student == null) return new Response<string>(HttpStatusCode.NotFound, "Student not found !");
 
             _dbContext.Students.Remove(student);
+            _cacheService.DeleteDataByKey($"student{studentId}");
             var result = await _dbContext.SaveChangesAsync();
 
             return result > 0
@@ -51,6 +59,13 @@ namespace WebApi
 
         public async Task<List<GetStudentDto>> GetAllStudentsAsync(StudentFilter filter)
         {
+            var cacheData = _cacheService.GetData<List<GetStudentDto>>(DefaultStudentCacheKey.Students);
+
+            if (cacheData != null && cacheData.Count > 0)
+            {
+                return cacheData;
+            }
+
             var query = _dbContext.Students.OrderBy(x=>x.Id).AsQueryable();
 
             if (filter.FirstNameOrLastName != null)
@@ -74,6 +89,9 @@ namespace WebApi
                 Email = student.Email,
                 PhoneNumber = student.PhoneNumber
             }).ToListAsync();
+
+            var expirityTime = DateTimeOffset.Now.AddSeconds(30);
+            _cacheService.AddData(DefaultStudentCacheKey.Students,students, expirityTime);
 
             return students;
         }

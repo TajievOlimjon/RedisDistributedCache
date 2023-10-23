@@ -8,7 +8,8 @@ namespace WebApi
     public class StudentsController : ControllerBase
     {
         private readonly IStudentService _studentService;
-        public StudentsController(IStudentService studentService)
+        public StudentsController(
+            IStudentService studentService)
         {
             _studentService = studentService;
         }
