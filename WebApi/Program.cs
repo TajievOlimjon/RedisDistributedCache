@@ -11,10 +11,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(configure =>
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
+builder.Services.AddMemoryCache();
 builder.Services.AddScoped<IStudentService,StudentService>();
 
-builder.Services.AddMemoryCache();
 
 var app = builder.Build();
 
