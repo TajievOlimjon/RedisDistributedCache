@@ -33,10 +33,21 @@ namespace WebApi
 
             await _dbContext.Students.AddAsync(newStudent, cancellationToken);
 
-            var expirityTime = DateTimeOffset.Now.AddSeconds(30);
-            _cacheService.AddData($"student{newStudent.Id}", newStudent, expirityTime);
+            var students = await _cacheService.GetAsync<List<GetStudentDto>>(DefaultStudentCacheKey.Students);
+            
+            students.Add(new GetStudentDto
+            {
+                Id = newStudent.Id,
+                FirstName = model.FirstName,
+                LastName = model.LastName,
+                Age = model.Age,
+                Email = model.Email,
+                PhoneNumber = model.PhoneNumber
+            });
+            var expirityTime = DateTimeOffset.Now.AddMinutes(2);
+            await _cacheService.AddAsync(DefaultStudentCacheKey.Students, students, expirityTime);
 
-            var result = await _dbContext.SaveChangesAsync(true, cancellationToken);
+            var result = await _dbContext.SaveChangesAsync(cancellationToken);
 
             return result > 0
                 ? new Response<AddStudentDto>(HttpStatusCode.OK, "Student data successfully added !")
@@ -49,7 +60,8 @@ namespace WebApi
             if (student == null) return new Response<string>(HttpStatusCode.NotFound, "Student not found !");
 
             _dbContext.Students.Remove(student);
-            _cacheService.DeleteDataByKey($"student{studentId}");
+            await _cacheService.RemoveByKeyAsync($"student{studentId}");
+
             var result = await _dbContext.SaveChangesAsync(cancellationToken);
 
             return result > 0
@@ -59,12 +71,7 @@ namespace WebApi
 
         public async Task<List<GetStudentDto>> GetAllStudentsAsync(StudentFilter filter, CancellationToken cancellationToken)
         {
-            var cacheData = _cacheService.GetData<List<GetStudentDto>>(DefaultStudentCacheKey.Students);
-
-            if (cacheData != null && cacheData.Count > 0)
-            {
-                return cacheData;
-            }
+            var studentsDataInCache = await _cacheService.GetAsync<List<GetStudentDto>>(DefaultStudentCacheKey.Students);
 
             var query = _dbContext.Students.OrderBy(x => x.Id).AsQueryable();
 
@@ -90,28 +97,37 @@ namespace WebApi
                 PhoneNumber = student.PhoneNumber
             }).ToListAsync(cancellationToken);
 
-            var expirityTime = DateTimeOffset.Now.AddSeconds(30);
-            _cacheService.AddData(DefaultStudentCacheKey.Students, students, expirityTime);
+            var expirityTime = DateTimeOffset.Now.AddMinutes(2);
+            await _cacheService.AddAsync(DefaultStudentCacheKey.Students, students, expirityTime);
 
             return students;
         }
 
         public async Task<Response<GetStudentDto>> GetStudentByIdAsync(int studentId, CancellationToken cancellationToken)
         {
-            var student = await _dbContext.Students.FirstOrDefaultAsync(s => s.Id == studentId, cancellationToken);
-            if (student == null) return new Response<GetStudentDto>(HttpStatusCode.NotFound, "Student not found !");
-
-            var model = new GetStudentDto
+            var studentDataInCache = await _cacheService.GetAsync<GetStudentDto>(studentId.ToString(), cancellationToken);
+            if(studentDataInCache==null)
             {
-                Id = student.Id,
-                FirstName = student.FirstName,
-                LastName = student.LastName,
-                Age = student.Age,
-                Email = student.Email,
-                PhoneNumber = student.PhoneNumber
-            };
+                var student = await _dbContext.Students.FirstOrDefaultAsync(s => s.Id == studentId, cancellationToken);
+                if (student == null) return new Response<GetStudentDto>(HttpStatusCode.NotFound, "Student not found !");
 
-            return new Response<GetStudentDto>(HttpStatusCode.OK, model);
+                var model = new GetStudentDto
+                {
+                    Id = student.Id,
+                    FirstName = student.FirstName,
+                    LastName = student.LastName,
+                    Age = student.Age,
+                    Email = student.Email,
+                    PhoneNumber = student.PhoneNumber
+                };
+
+                var expirityTime = DateTimeOffset.Now.AddSeconds(30);
+                await _cacheService.AddAsync(DefaultStudentCacheKey.Students, model, expirityTime);
+
+                return new Response<GetStudentDto>(HttpStatusCode.OK, model);
+            }
+
+            return new Response<GetStudentDto>(HttpStatusCode.OK, studentDataInCache);
         }
 
         public async Task<Response<UpdateStudentDto>> UpdateStudentAsync(UpdateStudentDto model, CancellationToken cancellationToken)

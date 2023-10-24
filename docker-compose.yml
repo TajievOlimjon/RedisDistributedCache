@@ -14,13 +14,9 @@ services:
     restart: always
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=https://+:443;http://+:80
+      - ASPNETCORE_URLS=http://+:80
     ports:
       - "7002:80"
-      - "7001:443"
-    volumes:
-      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
-      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
     depends_on:
       - "api-service-db"
       - "redis-cache-service"

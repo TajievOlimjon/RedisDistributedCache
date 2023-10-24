@@ -9,15 +9,15 @@ namespace WebApi
         private readonly ILogger<CacheService> _logger;
         public CacheService(ILogger<CacheService> logger)
         {
-            var redis = ConnectionMultiplexer.Connect("localhost:6379");
+            var redis = ConnectionMultiplexer.Connect("localhost:7003");
             _cacheDb = redis.GetDatabase();
             _logger = logger;
         }
-        public T GetData<T>(string key)
+        public async Task<T> GetAsync<T>(string key, CancellationToken cancellationToken = default)
         {
             try
             {
-                var value = _cacheDb.StringGet(key);
+                var value = await _cacheDb.StringGetAsync(key);
                 if (!string.IsNullOrEmpty(value))
                 {
                     var item = JsonSerializer.Deserialize<T>(value);
@@ -33,37 +33,34 @@ namespace WebApi
             }
         }
 
-        public bool DeleteDataByKey(string key)
+        public async Task RemoveByKeyAsync(string key, CancellationToken cancellationToken = default)
         {
             try
             {
-                var value = _cacheDb.KeyExists(key);
+                var value = await _cacheDb.KeyExistsAsync(key);
 
                 if (value)
                 {
-                    return _cacheDb.KeyDelete(key);
+                     await _cacheDb.KeyDeleteAsync(key);
                 }
-                return false;
             }
             catch (Exception ex)
             {
                 _logger.LogError("Error: {ex.Message}", ex.Message);
-                return false;
             }
         }
 
-        public bool AddData<T>(string key, T entity, DateTimeOffset exprirationTime)
+        public async Task AddAsync<T>(string key, T entity, DateTimeOffset exprirationTime, CancellationToken cancellationToken = default)
         {
             try
             {
                 var expertyTime = exprirationTime.Subtract(DateTime.Now);
-                var isSet = _cacheDb.StringSet(key, JsonSerializer.Serialize(entity), expertyTime);
-                return isSet;
+                var isSet = await _cacheDb.StringSetAsync(key, JsonSerializer.Serialize(entity), expertyTime);
+
             }
             catch (Exception ex)
             {
                 _logger.LogError("Error: {ex.Message}", ex.Message);
-                return false;
             }
         }
     }
