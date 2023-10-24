@@ -15,7 +15,7 @@ namespace WebApi
         }
 
         [HttpGet("GetAllStudents")]
-        public async Task<IActionResult> GetAllStudents([FromQuery]StudentFilter filter)
+        public async Task<IActionResult> GetAllStudents([FromQuery] StudentFilter filter)
         {
             var students = await _studentService.GetAllStudentsAsync(filter);
             if (students != null)
@@ -25,13 +25,13 @@ namespace WebApi
             return StatusCode((int)HttpStatusCode.NoContent, students);
         }
         [HttpGet("GetStudentById")]
-        public async Task<IActionResult> GetStudentById([FromQuery]int studentId)
+        public async Task<IActionResult> GetStudentById([FromQuery] int studentId)
         {
             var student = await _studentService.GetStudentByIdAsync(studentId);
             return StatusCode(student.StatusCode, student);
         }
         [HttpPost("AddStudent")]
-        public async Task<IActionResult> AddStudent([FromBody]AddStudentDto model)
+        public async Task<IActionResult> AddStudent([FromBody] AddStudentDto model)
         {
             var response = await _studentService.AddStudentAsync(model);
             return StatusCode(response.StatusCode, response);

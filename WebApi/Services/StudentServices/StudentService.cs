@@ -17,9 +17,9 @@ namespace WebApi
             _logger = logger;
             _cacheService = cacheService;
         }
-        public async Task<Response<AddStudentDto>> AddStudentAsync(AddStudentDto model)
+        public async Task<Response<AddStudentDto>> AddStudentAsync(AddStudentDto model, CancellationToken cancellationToken)
         {
-            var student = await _dbContext.Students.FirstOrDefaultAsync(s=>s.PhoneNumber==model.PhoneNumber);
+            var student = await _dbContext.Students.FirstOrDefaultAsync(s => s.PhoneNumber == model.PhoneNumber, cancellationToken);
             if (student != null) return new Response<AddStudentDto>(HttpStatusCode.BadRequest, "A student with this number already exists");
 
             var newStudent = new Student
@@ -31,33 +31,33 @@ namespace WebApi
                 PhoneNumber = model.PhoneNumber
             };
 
-            await _dbContext.Students.AddAsync(newStudent);
+            await _dbContext.Students.AddAsync(newStudent, cancellationToken);
 
             var expirityTime = DateTimeOffset.Now.AddSeconds(30);
             _cacheService.AddData($"student{newStudent.Id}", newStudent, expirityTime);
 
-            var result = await _dbContext.SaveChangesAsync();
+            var result = await _dbContext.SaveChangesAsync(true, cancellationToken);
 
-            return result > 0 
+            return result > 0
                 ? new Response<AddStudentDto>(HttpStatusCode.OK, "Student data successfully added !")
                 : new Response<AddStudentDto>(HttpStatusCode.OK, "Student data not added !");
         }
 
-        public async Task<Response<string>> DeleteStudentAsync(int studentId)
+        public async Task<Response<string>> DeleteStudentAsync(int studentId, CancellationToken cancellationToken)
         {
-            var student = await _dbContext.Students.FirstOrDefaultAsync(s => s.Id == studentId);
+            var student = await _dbContext.Students.FirstOrDefaultAsync(s => s.Id == studentId, cancellationToken);
             if (student == null) return new Response<string>(HttpStatusCode.NotFound, "Student not found !");
 
             _dbContext.Students.Remove(student);
             _cacheService.DeleteDataByKey($"student{studentId}");
-            var result = await _dbContext.SaveChangesAsync();
+            var result = await _dbContext.SaveChangesAsync(cancellationToken);
 
             return result > 0
                 ? new Response<string>(HttpStatusCode.OK, "Student data successfully deleted !")
                 : new Response<string>(HttpStatusCode.OK, "Student data not deleted !");
         }
 
-        public async Task<List<GetStudentDto>> GetAllStudentsAsync(StudentFilter filter)
+        public async Task<List<GetStudentDto>> GetAllStudentsAsync(StudentFilter filter, CancellationToken cancellationToken)
         {
             var cacheData = _cacheService.GetData<List<GetStudentDto>>(DefaultStudentCacheKey.Students);
 
@@ -66,11 +66,11 @@ namespace WebApi
                 return cacheData;
             }
 
-            var query = _dbContext.Students.OrderBy(x=>x.Id).AsQueryable();
+            var query = _dbContext.Students.OrderBy(x => x.Id).AsQueryable();
 
             if (filter.FirstNameOrLastName != null)
             {
-                query = query.Where(x=>x.FirstName.ToLower().Contains(filter.FirstNameOrLastName.ToLower()) ||
+                query = query.Where(x => x.FirstName.ToLower().Contains(filter.FirstNameOrLastName.ToLower()) ||
                                        x.LastName.ToLower().Contains(filter.FirstNameOrLastName.ToLower()));
             }
             if (filter.PhoneNumber != null)
@@ -78,7 +78,7 @@ namespace WebApi
                 query = query.Where(x => x.PhoneNumber == filter.PhoneNumber);
             }
 
-            var allTotalRecord = await query.CountAsync();
+            var allTotalRecord = await query.CountAsync(cancellationToken);
 
             var students = await query.Select(student => new GetStudentDto
             {
@@ -88,17 +88,17 @@ namespace WebApi
                 Age = student.Age,
                 Email = student.Email,
                 PhoneNumber = student.PhoneNumber
-            }).ToListAsync();
+            }).ToListAsync(cancellationToken);
 
             var expirityTime = DateTimeOffset.Now.AddSeconds(30);
-            _cacheService.AddData(DefaultStudentCacheKey.Students,students, expirityTime);
+            _cacheService.AddData(DefaultStudentCacheKey.Students, students, expirityTime);
 
             return students;
         }
 
-        public async Task<Response<GetStudentDto>> GetStudentByIdAsync(int studentId)
+        public async Task<Response<GetStudentDto>> GetStudentByIdAsync(int studentId, CancellationToken cancellationToken)
         {
-            var student = await _dbContext.Students.FirstOrDefaultAsync(s => s.Id == studentId);
+            var student = await _dbContext.Students.FirstOrDefaultAsync(s => s.Id == studentId, cancellationToken);
             if (student == null) return new Response<GetStudentDto>(HttpStatusCode.NotFound, "Student not found !");
 
             var model = new GetStudentDto
@@ -111,12 +111,12 @@ namespace WebApi
                 PhoneNumber = student.PhoneNumber
             };
 
-            return new Response<GetStudentDto>(HttpStatusCode.OK,model);
+            return new Response<GetStudentDto>(HttpStatusCode.OK, model);
         }
 
-        public async Task<Response<UpdateStudentDto>> UpdateStudentAsync(UpdateStudentDto model)
+        public async Task<Response<UpdateStudentDto>> UpdateStudentAsync(UpdateStudentDto model, CancellationToken cancellationToken)
         {
-            var student = await _dbContext.Students.FirstOrDefaultAsync(s => s.Id == model.Id);
+            var student = await _dbContext.Students.FirstOrDefaultAsync(s => s.Id == model.Id, cancellationToken);
             if (student == null) return new Response<UpdateStudentDto>(HttpStatusCode.NotFound, "Student not found !");
 
             student.FirstName = model.FirstName;
@@ -125,12 +125,11 @@ namespace WebApi
             student.Email = model.Email;
             student.PhoneNumber = model.PhoneNumber;
 
-            var result = await _dbContext.SaveChangesAsync();
+            var result = await _dbContext.SaveChangesAsync(cancellationToken);
 
             return result > 0
                 ? new Response<UpdateStudentDto>(HttpStatusCode.OK, "Student data successfully updated !")
                 : new Response<UpdateStudentDto>(HttpStatusCode.OK, "Student data not updated !");
-
         }
     }
 }

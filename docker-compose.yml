@@ -1,0 +1,58 @@
+version: '3.4'
+
+networks:
+  dev: 
+    driver: bridge
+
+services:
+  api-service:
+    image: ${DOCKER_REGISTRY-}webapi
+    container_name: api-service
+    build:
+      context: .
+      dockerfile: WebApi/Dockerfile
+    restart: always
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+    ports:
+      - "7002:80"
+      - "7001:443"
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+    depends_on:
+      - "api-service-db"
+      - "redis-cache-service"
+    links:
+      - "redis-cache-service"
+    networks:
+      - dev
+  api-service-db:
+    image: postgres
+    container_name: api-service-db
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=developer2023
+      - POSTGRES_DB=EducationDB
+    ports:
+      - "5433:5432"
+    volumes:
+     - api-service-db-data:/var/lib/postgresql/data
+    networks:
+      - dev
+
+  redis-cache-service:
+    image: redis
+    container_name: redis-cache-service
+    restart: always
+    ports:
+     - "7003:6379"
+    volumes:
+        - redis-cache-service-data:/data
+    networks:
+      - dev
+volumes:
+  api-service-db-data:
+  redis-cache-service-data:  

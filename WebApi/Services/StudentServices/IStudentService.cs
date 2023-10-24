@@ -2,11 +2,11 @@
 {
     public interface IStudentService
     {
-        Task<List<GetStudentDto>> GetAllStudentsAsync(StudentFilter filter);
-        Task<Response<GetStudentDto>> GetStudentByIdAsync(int studentId);
-        Task<Response<string>> DeleteStudentAsync(int studentId);
-        Task<Response<UpdateStudentDto>> UpdateStudentAsync(UpdateStudentDto model);
-        Task<Response<AddStudentDto>> AddStudentAsync(AddStudentDto model);
+        Task<List<GetStudentDto>> GetAllStudentsAsync(StudentFilter filter, CancellationToken cancellationToken);
+        Task<Response<GetStudentDto>> GetStudentByIdAsync(int studentId, CancellationToken cancellationToken);
+        Task<Response<string>> DeleteStudentAsync(int studentId, CancellationToken cancellationToken);
+        Task<Response<UpdateStudentDto>> UpdateStudentAsync(UpdateStudentDto model, CancellationToken cancellationToken);
+        Task<Response<AddStudentDto>> AddStudentAsync(AddStudentDto model, CancellationToken cancellationToken);
     }
 }
 

@@ -7,12 +7,17 @@ builder.Services.AddDbContext<ApplicationDbContext>(configure =>
 {
     configure.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("RedisConnection"); 
+    options.InstanceName = "Redis";
+});
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddMemoryCache();
-builder.Services.AddScoped<IStudentService,StudentService>();
+builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddScoped<ICacheService, CacheService>();
 
 var app = builder.Build();

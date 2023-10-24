@@ -17,11 +17,11 @@ namespace WebApi
         {
             try
             {
-               var value = _cacheDb.StringGet(key);
+                var value = _cacheDb.StringGet(key);
                 if (!string.IsNullOrEmpty(value))
                 {
                     var item = JsonSerializer.Deserialize<T>(value);
-                    if(item!=null) return item;
+                    if (item != null) return item;
                     return default;
                 }
                 return default;
