@@ -40,17 +40,31 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(multiplexer);*/
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-//builder.Services.AddDistributedMemoryCache();
 builder.Services.AddScoped<IStudentService, StudentService>();
 //builder.Services.AddScoped<IRedisCacheService, RedisCacheService>();
 builder.Services.AddScoped<ICacheService,CacheService>(x=> new CacheService(redisConnection));
 
 var app = builder.Build();
 
-app.Logger.LogInformation(new string('=',120));
-app.Logger.LogError("Redis : {0}", redisConnection);
-app.Logger.LogError("Database Connection: {0}", con);
-app.Logger.LogInformation(new string('=', 120));
+var json = new ConfigurationBuilder()
+        .SetBasePath(Directory.GetCurrentDirectory())
+        .AddJsonFile("appsettings.Production.json")
+        .Build();
+if (app.Environment.IsProduction())
+{
+    app.Logger.LogInformation(new string('=', 120));
+    app.Logger.LogInformation("Redis : {0}", json.GetConnectionString("RedisConnection"));
+    app.Logger.LogInformation("Database Connection: {0}", json.GetConnectionString("DefaultConnection"));
+    app.Logger.LogInformation(new string('=', 120));
+}
+else
+{
+    app.Logger.LogInformation(new string('=', 120));
+    app.Logger.LogInformation("Redis : {0}", json.GetConnectionString("RedisConnection"));
+    app.Logger.LogInformation("Database Connection: {0}", json.GetConnectionString("DefaultConnection"));
+    app.Logger.LogInformation(new string('=', 120));
+}
+
 
 try
 {

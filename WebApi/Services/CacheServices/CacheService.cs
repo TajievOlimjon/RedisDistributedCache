@@ -58,7 +58,7 @@ namespace WebApi
             try
             {
                 var expertyTime = exprirationTime.Subtract(DateTime.Now);
-                var isSet = await _cacheDb.StringSetAsync(key, JsonSerializer.Serialize(entity), expertyTime);
+                await _cacheDb.StringSetAsync(key, JsonSerializer.Serialize(entity), expertyTime);
 
             }
             catch (Exception ex)
