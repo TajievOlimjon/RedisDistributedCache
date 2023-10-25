@@ -7,9 +7,9 @@ namespace WebApi
     {
         private readonly IDatabase _cacheDb;
         private readonly ILogger<CacheService> _logger;
-        public CacheService(string? connection)
+        public CacheService(string connection)
         {
-            var redis = ConnectionMultiplexer.Connect("localhost:7003");
+            var redis = ConnectionMultiplexer.Connect(connection);
             _cacheDb = redis.GetDatabase();
         }
         public CacheService(ILogger<CacheService> logger)

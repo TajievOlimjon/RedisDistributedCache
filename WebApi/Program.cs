@@ -15,7 +15,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(configure =>
 });
 
 var redisConnection = builder.Configuration.GetConnectionString("RedisConnection");
-if(builder.Environment.IsProduction()) redisConnection = builder.Configuration.GetConnectionString("RedisConnection");
+//if(builder.Environment.IsProduction()) redisConnection = builder.Configuration.GetConnectionString("RedisConnection");
 /*builder.Services.AddStackExchangeRedisCache(options =>
 {
     //options.Configuration = builder.Configuration.GetConnectionString("RedisConnection");
@@ -47,10 +47,10 @@ builder.Services.AddScoped<ICacheService,CacheService>(x=> new CacheService(redi
 
 var app = builder.Build();
 
-app.Logger.LogError(new string('=',120));
-app.Logger.LogError("Redis: {0}", redisConnection);
-app.Logger.LogError("DbConnection: {0}", con);
-app.Logger.LogError(new string('=', 120));
+app.Logger.LogInformation(new string('=',120));
+app.Logger.LogError("Redis : {0}", redisConnection);
+app.Logger.LogError("Database Connection: {0}", con);
+app.Logger.LogInformation(new string('=', 120));
 
 try
 {
