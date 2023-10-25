@@ -73,6 +73,11 @@ namespace WebApi
         {
             var studentsDataInCache = await _cacheService.GetAsync<List<GetStudentDto>>(DefaultStudentCacheKey.Students);
 
+            if (studentsDataInCache.Count != 0)
+            {
+                _logger.LogInformation("Data retrieved from cache");
+                return studentsDataInCache;
+            }
             var query = _dbContext.Students.OrderBy(x => x.Id).AsQueryable();
 
             if (filter.FirstNameOrLastName != null)
@@ -100,6 +105,7 @@ namespace WebApi
             var expirityTime = DateTimeOffset.Now.AddMinutes(2);
             await _cacheService.AddAsync(DefaultStudentCacheKey.Students, students, expirityTime);
 
+            _logger.LogInformation("Data retrieved from Database");
             return students;
         }
 
