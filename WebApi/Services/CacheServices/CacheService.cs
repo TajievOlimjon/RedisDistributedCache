@@ -7,10 +7,13 @@ namespace WebApi
     {
         private readonly IDatabase _cacheDb;
         private readonly ILogger<CacheService> _logger;
-        public CacheService(ILogger<CacheService> logger)
+        public CacheService(string? connection)
         {
             var redis = ConnectionMultiplexer.Connect("localhost:7003");
             _cacheDb = redis.GetDatabase();
+        }
+        public CacheService(ILogger<CacheService> logger)
+        {
             _logger = logger;
         }
         public async Task<T> GetAsync<T>(string key, CancellationToken cancellationToken = default)
