@@ -70,7 +70,6 @@ try
 {
     await using var scope = app.Services.CreateAsyncScope();
     var dataContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    var log = scope.ServiceProvider.GetRequiredService<ILoggerFactory>();
     await dataContext.Database.MigrateAsync();
     await scope.DisposeAsync();
 }
