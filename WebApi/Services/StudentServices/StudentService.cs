@@ -7,11 +7,11 @@ namespace WebApi
     {
         private readonly ApplicationDbContext _dbContext;
         private readonly ILogger<StudentService> _logger;
-        private readonly ICacheService _cacheService;
+        private readonly IRedisCacheService _cacheService;
         public StudentService(
             ApplicationDbContext dbContext,
             ILogger<StudentService> logger,
-            ICacheService cacheService)
+            IRedisCacheService cacheService)
         {
             _dbContext = dbContext;
             _logger = logger;
@@ -73,7 +73,7 @@ namespace WebApi
         {
             var studentsDataInCache = await _cacheService.GetAsync<List<GetStudentDto>>(DefaultStudentCacheKey.Students);
 
-            if (studentsDataInCache.Count != 0)
+            if (studentsDataInCache!=null)
             {
                 _logger.LogInformation("Data retrieved from cache");
                 return studentsDataInCache;

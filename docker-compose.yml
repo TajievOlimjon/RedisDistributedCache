@@ -51,4 +51,4 @@ services:
       - dev
 volumes:
   api-service-db-data:
-  redis-cache-service-data:  
+  redis-cache-service-data:
