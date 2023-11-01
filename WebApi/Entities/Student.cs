@@ -8,9 +8,10 @@
         public int Age { get; set; }
         public string? Email { get; set; } = null;
         public string PhoneNumber { get; set; } = null!;
-        public int GroupId { get; set; }
-        public virtual Group Group { get; set; } = null!;
+        public int CourseId { get; set; }
+        public virtual Course Course { get; set; } = null!;
     }
 }
+
 
 

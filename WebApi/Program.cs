@@ -3,18 +3,16 @@ using WebApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var con = builder.Configuration.GetConnectionString("DefaultConnection");
-
 builder.Services.AddDbContext<ApplicationDbContext>(configure =>
 {
-    configure.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+    configure.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+                .UseLazyLoadingProxies();
 });
 
-var redisConnection = builder.Configuration.GetConnectionString("RedisConnection");
 builder.Services.AddStackExchangeRedisCache(options =>
 {
-    options.Configuration = "localhost:6379";//builder.Configuration.GetConnectionString("RedisConnection");
-    options.InstanceName = "Redis";
+    options.Configuration = builder.Configuration.GetConnectionString("RedisConnection");
+    options.InstanceName = "Redis cache";
 });
 
 builder.Services.AddControllers();
@@ -22,7 +20,6 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddSingleton<IRedisCacheService, RedisCacheService>();
-//builder.Services.AddScoped<ICacheService,CacheService>(x=> new CacheService(redisConnection));
 
 var app = builder.Build();
 try

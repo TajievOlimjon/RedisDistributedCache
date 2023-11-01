@@ -1,7 +1,7 @@
 version: '3.4'
 
 networks:
-  dev: 
+  service: 
     driver: bridge
 
 services:
@@ -23,7 +23,7 @@ services:
     links:
       - "redis-cache-service"
     networks:
-      - dev
+      - service
   api-service-db:
     image: postgres
     container_name: api-service-db
@@ -37,7 +37,7 @@ services:
     volumes:
      - api-service-db-data:/var/lib/postgresql/data
     networks:
-      - dev
+      - service
 
   redis-cache-service:
     image: redis
@@ -48,7 +48,7 @@ services:
     volumes:
         - redis-cache-service-data:/data
     networks:
-      - dev
+      - service
 volumes:
   api-service-db-data:
   redis-cache-service-data:

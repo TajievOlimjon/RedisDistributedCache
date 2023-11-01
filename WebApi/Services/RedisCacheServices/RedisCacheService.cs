@@ -6,36 +6,57 @@ namespace WebApi
     public class RedisCacheService : IRedisCacheService
     {
         private readonly IDistributedCache _distributedCache;
-        public RedisCacheService(IDistributedCache distributedCache) => _distributedCache = distributedCache;
-
-        public async Task AddAsync<T>(string key, T entity, DateTimeOffset exprirationTime,CancellationToken cancellationToken = default) where T : class
+        private readonly ILogger<RedisCacheService> _loggerService;
+        public RedisCacheService(
+            IDistributedCache distributedCache,
+            ILogger<RedisCacheService> loggerService)
         {
-            var cacheOption = new DistributedCacheEntryOptions
+            _distributedCache = distributedCache;
+            _loggerService = loggerService;
+        }
+
+        public async Task AddAsync<T>(string key, T entity, DateTimeOffset exprirationTime, CancellationToken cancellationToken = default) where T : class
+        {
+            try
             {
-                AbsoluteExpiration = exprirationTime,
-            };
+                var jsonSerializerOption = new JsonSerializerOptions() { WriteIndented = true };
+                var jsonObject = JsonSerializer.Serialize(entity, jsonSerializerOption);
 
-            var jsonSerializerOption = new JsonSerializerOptions() { WriteIndented = true };
-            var jsonObject = JsonSerializer.Serialize(entity,jsonSerializerOption);
-
-            await _distributedCache.SetStringAsync(key, jsonObject, cacheOption, cancellationToken);
+                var cacheOption = new DistributedCacheEntryOptions { AbsoluteExpiration = exprirationTime };
+                await _distributedCache.SetStringAsync(key, jsonObject, cacheOption, cancellationToken);
+            }
+            catch (Exception exception)
+            {
+                _loggerService.LogError("Redis error: {0}",exception.Message);
+            }
         }
 
         public async Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default) where T : class
         {
-            var dataInCache = await _distributedCache.GetStringAsync(key,cancellationToken);
-
-            if (!string.IsNullOrEmpty(dataInCache))
+            try
             {
-                return JsonSerializer.Deserialize<T>(dataInCache);
-            }
+                var dataInCache = await _distributedCache.GetStringAsync(key, cancellationToken);
 
-            return default;
+                return !string.IsNullOrEmpty(dataInCache) ? JsonSerializer.Deserialize<T>(dataInCache) : default;
+            }
+            catch (Exception exception)
+            {
+                _loggerService.LogError("Redis error: {0}", exception.Message);
+                return default;
+            }
         }
 
         public async Task RemoveByKeyAsync(string key, CancellationToken cancellationToken = default)
         {
-            await _distributedCache.RemoveAsync(key, cancellationToken);
+            try
+            {
+                await _distributedCache.RemoveAsync(key, cancellationToken);
+            }
+            catch (Exception exception)
+            {
+                _loggerService.LogError("Redis error: {0}", exception.Message);
+            }
         }
     }
 }
+
