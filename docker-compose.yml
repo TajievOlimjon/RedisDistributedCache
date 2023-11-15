@@ -45,10 +45,15 @@ services:
     restart: always
     ports:
      - "7003:6379"
+    command: redis-server /usr/local/etc/redis/redis.conf
+    # sysctls:
+    #  - sysctl vm.overcommit_memory=1
     volumes:
         - redis-cache-service-data:/data
+        - ./redis.conf:/usr/local/etc/redis/redis.conf
     networks:
       - service
 volumes:
   api-service-db-data:
   redis-cache-service-data:
+    
